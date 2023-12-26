@@ -1,0 +1,21 @@
+[global]
+socket_base_path = "/tmp/example_socket"
+users_rw = [ ]
+
+[[serial]]
+name = "serial1"
+users_rw = [ "user1", "user2"]
+serial_device_name = "/dev/ttyS0"
+
+[[serial]]
+name = "serial2"
+users_rw = [ "user1", "user2", "user3"]
+serial_device_name = "/dev/ttyS1"
+
+[[dummy]]
+name = "dummy1"
+users_rw = [ "user1", "user2", "user3"]
+
+[[dummy]]
+name = "dummy2"
+users_rw = [ "user1", "user2", "user3"]
