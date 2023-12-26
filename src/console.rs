@@ -11,22 +11,22 @@ pub struct Console {
     pub users_rw: Vec<String>,
 }
 
-fn handle_client(mut stream: UnixStream) {
+fn handle_client(mut stream: UnixStream, name: String) {
     // Handle incoming data from the client
     let mut buffer = [0; 1024];
     loop {
         match stream.read(&mut buffer) {
             Ok(n) => {
                 if n == 0 {
-                    // Connection closed by the client
                     break;
                 }
                 let received_data = &buffer[..n];
                 let received_str = String::from_utf8_lossy(received_data);
-                println!("Received in : {}", received_str);
+                println!("Received on {} : {}", name, received_str.trim_end());
 
-                // Echo the received data back to the client
-                stream.write_all(received_data).unwrap();
+                let write_back = format!("you said: {}", received_str);
+                stream.write_all(write_back.as_bytes()).unwrap();
+                //stream.write_all(received_data).unwrap();
             }
             Err(err) => {
                 eprintln!("Error reading from socket: {}", err);
@@ -38,7 +38,7 @@ fn handle_client(mut stream: UnixStream) {
 
 pub fn create_listener(console: Console) {
 
-    println!("Start server listening on {:?}", &console.socket_path);
+    println!("Start server {} listening on {:?}", &console.name, &console.socket_path);
     std::fs::remove_file(&console.socket_path).ok();
 
     let listener = UnixListener::bind(&console.socket_path).expect("Failed to bind to socket");
@@ -48,16 +48,18 @@ pub fn create_listener(console: Console) {
 fn client_handler(listener: UnixListener, console: Console) {
     
     println!("Start client handler for {:?}", console.name);
+    
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                // Spawn a new thread to handle each client
+                let console_name= console.name.clone();
+                eprintln!("Accepting connection for {}", console_name);
                 thread::spawn(move || {
-                    handle_client(stream);
+                    handle_client(stream, console_name);
                 });
             }
             Err(err) => {
-                eprintln!("Error accepting connection: {}", err);
+                eprintln!("Error accepting connection for {} : {}", console.name, err);
                 break;
             }
         }

@@ -59,12 +59,6 @@ pub fn load_config(file_name: &str) -> ServerConfig {
     //     println!();
     // }
 
-    // println!("Dummy Configs:");
-    // for dummy_config in &dummy_configs {
-    //     println!("Name: {}", dummy_config.name);
-    //     println!("Users_RW: {:?}", dummy_config.users_rw);
-    //     println!();
-    // }
 }
 
 
