@@ -1,21 +1,22 @@
 [global]
 socket_base_path = "/tmp/example_socket"
+log_file = "/tmp/console_server.log"
 users_rw = [ ]
 
-[[serial]]
+[[serial_console]]
 name = "serial1"
 users_rw = [ "user1", "user2"]
 serial_device_name = "/dev/ttyS0"
 
-[[serial]]
+[[serial_console]]
 name = "serial2"
 users_rw = [ "user1", "user2", "user3"]
 serial_device_name = "/dev/ttyS1"
 
-[[dummy]]
+[[dummy_console]]
 name = "dummy1"
 users_rw = [ "user1", "user2", "user3"]
 
-[[dummy]]
+[[dummy_console]]
 name = "dummy2"
 users_rw = [ "user1", "user2", "user3"]
