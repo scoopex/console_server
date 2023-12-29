@@ -9,12 +9,14 @@ pub struct GlobalConfig {
     pub socket_base_path: String,
     pub log_file: String,
     pub users_rw: Vec<String>,
+    pub users_ro: Vec<String>,
 }
 
 
 pub struct SerialConfig {
     pub name: String,
     pub users_rw: Vec<String>,
+    pub users_ro: Vec<String>,
     pub socket_path: String,
     pub serial_device_name: String,
 }
@@ -22,6 +24,7 @@ pub struct SerialConfig {
 pub struct DummyConfig {
     pub name: String,
     pub users_rw: Vec<String>,
+    pub users_ro: Vec<String>,
     pub socket_path: String,
 }
 
@@ -75,6 +78,14 @@ fn parse_global_config(toml_value: &Value) -> GlobalConfig {
           .iter()
           .filter_map(|v| v.as_str().map(String::from))
           .collect(),
+      users_ro: global_section
+          .get("users_ro")
+          .and_then(Value::as_array)
+          .unwrap()
+          .iter()
+          .filter_map(|v| v.as_str().map(String::from))
+          .collect(),
+
   }
 }
 
@@ -91,6 +102,13 @@ fn parse_serial_configs(toml_value: &Value, socket_base_path: &String) -> Vec<Se
                 ),
                 users_rw: serial_section
                     .get("users_rw")
+                    .and_then(Value::as_array)
+                    .unwrap()
+                    .iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect(),
+                users_ro: serial_section
+                    .get("users_ro")
                     .and_then(Value::as_array)
                     .unwrap()
                     .iter()
@@ -121,6 +139,13 @@ fn parse_dummy_configs(toml_value: &Value, socket_base_path: &String) -> Vec<Dum
                 ),
                 users_rw: dummy_section
                     .get("users_rw")
+                    .and_then(Value::as_array)
+                    .unwrap()
+                    .iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect(),
+                users_ro: dummy_section
+                    .get("users_ro")
                     .and_then(Value::as_array)
                     .unwrap()
                     .iter()

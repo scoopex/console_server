@@ -31,7 +31,7 @@ fn handle_client(mut stream: UnixStream, name: String) {
     }
 }
 
-fn set_file_permissions(console: &DummyConfig) {
+fn set_socket_permissions(console: &DummyConfig) {
     let mut entries: Vec<AclEntry> = vec![];
 
     entries.push(AclEntry::allow_user("", Perm::READ | Perm::WRITE, None));
@@ -43,6 +43,13 @@ fn set_file_permissions(console: &DummyConfig) {
         entries.push(AclEntry::allow_user(
             username,
             Perm::READ | Perm::WRITE,
+            None,
+        ));
+    }
+    for username in &console.users_ro {
+        entries.push(AclEntry::allow_user(
+            username,
+            Perm::READ,
             None,
         ));
     }
@@ -70,12 +77,11 @@ pub fn create_listener(console: &DummyConfig) {
         "Try it, with:\nsocat - UNIX-CONNECT:{}",
         console.socket_path
     );
-    // println!();
 
     std::fs::remove_file(&console.socket_path).ok();
 
     let listener = UnixListener::bind(&console.socket_path).expect("Failed to bind to socket");
-    set_file_permissions(console);
+    set_socket_permissions(console);
     client_handler(listener, console);
 }
 
