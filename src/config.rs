@@ -15,6 +15,7 @@ pub struct GlobalConfig {
 pub struct SerialConfig {
     pub name: String,
     pub users_rw: Vec<String>,
+    pub socket_path: String,
     pub serial_device_name: String,
 }
 
@@ -41,7 +42,7 @@ pub fn load_config(file_name: &str) -> ServerConfig {
     let toml_value: Value = toml::from_str(&toml_content).expect("Failed to parse TOML content");
 
     let global_config = parse_global_config(&toml_value);
-    let serial_config: Vec<SerialConfig> = parse_serial_configs(&toml_value);
+    let serial_config: Vec<SerialConfig> = parse_serial_configs(&toml_value, &global_config.socket_base_path);
     let dummy_config: Vec<DummyConfig> = parse_dummy_configs(&toml_value, &global_config.socket_base_path);
 
     // // Extract and process the values
@@ -51,15 +52,6 @@ pub fn load_config(file_name: &str) -> ServerConfig {
         dummy: dummy_config,
     };
     return result;
-
-    // println!("Serial Configs:");
-    // for serial_config in &serial_configs {
-    //     println!("Name: {}", serial_config.name);
-    //     println!("Users_RW: {:?}", serial_config.users_rw);
-    //     println!("Serial Device Name: {}", serial_config.serial_device_name);
-    //     println!();
-    // }
-
 }
 
 
@@ -86,12 +78,17 @@ fn parse_global_config(toml_value: &Value) -> GlobalConfig {
   }
 }
 
-fn parse_serial_configs(toml_value: &Value) -> Vec<SerialConfig> {
+fn parse_serial_configs(toml_value: &Value, socket_base_path: &String) -> Vec<SerialConfig> {
     if let Some(serial_array) = toml_value.get("serial_console").and_then(Value::as_array) {
         return serial_array
             .iter()
             .map(|serial_section| SerialConfig {
                 name: serial_section["name"].as_str().unwrap_or_default().to_string(),
+                socket_path: format!(
+                    "{}_{}",
+                    socket_base_path,
+                    serial_section["name"].as_str().unwrap_or_default().to_string()
+                ),
                 users_rw: serial_section
                     .get("users_rw")
                     .and_then(Value::as_array)

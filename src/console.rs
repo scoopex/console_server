@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::thread;
 
-use crate::config::DummyConfig;
+use crate::config::{DummyConfig, SerialConfig};
 
 fn handle_client(mut stream: UnixStream, name: String) {
     // Handle incoming data from the client
