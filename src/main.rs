@@ -13,16 +13,15 @@ fn main() {
     let cfg: ServerConfig = load_config("example.toml");
 
     for dummy_config in cfg.dummy {
-        log::info!("Dummy Console {} for ", dummy_config.name);
-        println!("Users_RW: {:?}", dummy_config.users_rw);
-        println!("Socket Path: {:?}", dummy_config.socket_path);
-        println!("\nTry it, with:\nsocat - UNIX-CONNECT:{}", dummy_config.socket_path);
-        println!();
         thread::spawn(move || {
             create_listener(&dummy_config);
         });
-
     }
+    // for serial_config in cfg.serial {
+    //     thread::spawn(move || {
+    //         create_listener(&serial_config);
+    //     });
+    // }
 
 
     thread::park();
