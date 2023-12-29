@@ -3,6 +3,9 @@
 use std::io::{Read, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::thread;
+use exacl::{setfacl, AclEntry, Perm};
+
+use crate::config::DummyConfig;
 
 #[derive(Clone, Debug, Default)]
 pub struct Console { 
@@ -26,7 +29,6 @@ fn handle_client(mut stream: UnixStream, name: String) {
 
                 let write_back = format!("you said: {}", received_str);
                 stream.write_all(write_back.as_bytes()).unwrap();
-                //stream.write_all(received_data).unwrap();
             }
             Err(err) => {
                 eprintln!("Error reading from socket: {}", err);
@@ -36,16 +38,38 @@ fn handle_client(mut stream: UnixStream, name: String) {
     }
 }
 
-pub fn create_listener(console: Console) {
+
+fn set_file_permissions(console: &DummyConfig) {
+    let mut entries: Vec<AclEntry> = vec![];
+
+    entries.push(AclEntry::allow_user("", Perm::READ | Perm::WRITE, None));
+    entries.push(AclEntry::allow_group("", Perm::empty(), None));
+    entries.push(    AclEntry::allow_other(Perm::empty(), None));
+    entries.push(    AclEntry::allow_mask(Perm::empty(), None));
+    
+    for username in &console.users_rw {
+        entries.push(
+            AclEntry::allow_user(username, Perm::READ | Perm::WRITE, None)
+        );
+    }
+
+    match setfacl(&[&console.socket_path], &entries, None){
+        Ok(_) => println!("ACL file permissions successfully set for {}", &console.socket_path),
+        Err(e) => eprintln!("Error setting file permissions for {}: {}", &console.socket_path, e),
+    }
+}
+
+pub fn create_listener(console: &DummyConfig) {
 
     println!("Start server {} listening on {:?}", &console.name, &console.socket_path);
     std::fs::remove_file(&console.socket_path).ok();
 
     let listener = UnixListener::bind(&console.socket_path).expect("Failed to bind to socket");
+    set_file_permissions(console);
     client_handler(listener, console);
 }
 
-fn client_handler(listener: UnixListener, console: Console) {
+fn client_handler(listener: UnixListener, console: &DummyConfig) {
     
     println!("Start client handler for {:?}", console.name);
     

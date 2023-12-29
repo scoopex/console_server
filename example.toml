@@ -15,8 +15,8 @@ serial_device_name = "/dev/ttyS1"
 
 [[dummy_console]]
 name = "dummy1"
-users_rw = [ "user1", "user2", "user3"]
+users_rw = [ "marc", "daemon"]
 
 [[dummy_console]]
 name = "dummy2"
-users_rw = [ "user1", "user2", "user3"]
+users_rw = [ "sys"]
