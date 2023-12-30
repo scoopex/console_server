@@ -1,29 +1,27 @@
-
+use console_server::config::{load_config, ServerConfig};
+use console_server::console::{Console, DummyConsole, SerialConsole};
 use std::thread;
-use console_server::console::{DummyConsole,SerialConsole, Console};
-use console_server::config::{ServerConfig, load_config};
 
 fn main() {
     env_logger::Builder::new()
-    .filter_level(log::LevelFilter::Info)
-    .format_timestamp_secs()
-    .init();
+        .filter_level(log::LevelFilter::Info)
+        .format_timestamp_secs()
+        .init();
 
     unsafe { libc::umask(0o077) };
     let cfg: ServerConfig = load_config("example.toml");
 
     for dummy_config in cfg.dummy {
+        let socket_base_path = cfg.global.socket_base_path.clone();
         thread::spawn(move || {
-            let cons = Console::new(
-                dummy_config.name, 
-                dummy_config.users_rw,
-                dummy_config.users_ro,
-                dummy_config.socket_path
-            );
-            let ds = DummyConsole{
-                console: cons
-            };
-            ds.start();
+            DummyConsole {
+                console: Console::new(
+                    dummy_config.name,
+                    dummy_config.users_rw,
+                    dummy_config.users_ro,
+                    socket_base_path,
+                ),
+            }.start();
         });
     }
     // for serial_config in cfg.serial {
@@ -32,7 +30,5 @@ fn main() {
     //     });
     // }
 
-
     thread::park();
 }
-

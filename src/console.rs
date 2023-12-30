@@ -14,12 +14,12 @@ pub struct Console {
 
 impl Console {
 
-    pub fn new(name: String, users_rw: Vec<String>, users_ro: Vec<String>, socket_path: String) -> Console {
+    pub fn new(name: String, users_rw: Vec<String>, users_ro: Vec<String>, socket_base_path: String) -> Console {
         Console {
-            name: name,
+            name: name.clone(),
             users_ro: users_ro,
             users_rw: users_rw,
-            socket_path: socket_path
+            socket_path: format!( "{}_{}", socket_base_path, name.clone()),
         }
     }
 
