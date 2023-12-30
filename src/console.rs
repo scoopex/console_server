@@ -71,7 +71,7 @@ impl Console {
     }
 }
 
-trait ConsoleCapable {
+pub trait ConsoleCapable {
 
     fn handle_client(stream: UnixStream, name: String);
 
