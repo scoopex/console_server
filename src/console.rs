@@ -13,13 +13,17 @@ pub struct Console {
 }
 
 impl Console {
-
-    pub fn new(name: String, users_rw: Vec<String>, users_ro: Vec<String>, socket_base_path: String) -> Console {
+    pub fn new(
+        name: String,
+        users_rw: Vec<String>,
+        users_ro: Vec<String>,
+        socket_base_path: String,
+    ) -> Console {
         Console {
             name: name.clone(),
             users_ro: users_ro,
             users_rw: users_rw,
-            socket_path: format!( "{}_{}", socket_base_path, name.clone()),
+            socket_path: format!("{}_{}", socket_base_path, name.clone()),
         }
     }
 
@@ -55,7 +59,7 @@ impl Console {
         }
     }
 
-    pub fn get_listener(&self) -> UnixListener{
+    pub fn get_listener(&self) -> UnixListener {
         log::info!(
             "Start server {} listening on {:?}",
             &self.name,
@@ -72,7 +76,6 @@ impl Console {
 }
 
 pub trait ConsoleCapable {
-
     fn handle_client(stream: UnixStream, name: String);
 
     fn start_client_handler(&self, console: &Console) {
@@ -95,14 +98,13 @@ pub trait ConsoleCapable {
             }
         }
     }
-
 }
 pub struct DummyConsole {
     pub console: Console,
 }
 
-impl DummyConsole{
-    pub fn start(&self){
+impl DummyConsole {
+    pub fn start(&self) {
         self.start_client_handler(&self.console);
     }
 }
@@ -111,16 +113,13 @@ pub struct SerialConsole {
     pub console: Console,
 }
 
-impl SerialConsole{
-    pub fn start(&self){
+impl SerialConsole {
+    pub fn start(&self) {
         self.start_client_handler(&self.console);
     }
 }
 
-
-
-
-impl ConsoleCapable for DummyConsole{
+impl ConsoleCapable for DummyConsole {
     fn handle_client(mut stream: UnixStream, name: String) {
         let mut buffer = [0; 1024];
         loop {
@@ -131,7 +130,11 @@ impl ConsoleCapable for DummyConsole{
                     }
                     let received_data = &buffer[..n];
                     let received_str = String::from_utf8_lossy(received_data);
-                    println!("Received on dummy console {} : {}", name, received_str.trim_end());
+                    println!(
+                        "Received on dummy console {} : {}",
+                        name,
+                        received_str.trim_end()
+                    );
 
                     let write_back = format!("you said: {}", received_str);
                     stream.write_all(write_back.as_bytes()).unwrap();
@@ -143,10 +146,9 @@ impl ConsoleCapable for DummyConsole{
             }
         }
     }
-
 }
 
-impl ConsoleCapable for SerialConsole{
+impl ConsoleCapable for SerialConsole {
     fn handle_client(mut stream: UnixStream, name: String) {
         let mut buffer = [0; 1024];
         loop {
@@ -157,7 +159,11 @@ impl ConsoleCapable for SerialConsole{
                     }
                     let received_data = &buffer[..n];
                     let received_str = String::from_utf8_lossy(received_data);
-                    println!("Received on serial console {} : {}", name, received_str.trim_end());
+                    println!(
+                        "Received on serial console {} : {}",
+                        name,
+                        received_str.trim_end()
+                    );
 
                     let write_back = format!("you said: {}", received_str);
                     stream.write_all(write_back.as_bytes()).unwrap();
@@ -169,5 +175,4 @@ impl ConsoleCapable for SerialConsole{
             }
         }
     }
-
 }
