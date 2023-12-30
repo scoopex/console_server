@@ -24,11 +24,21 @@ fn main() {
             }.start();
         });
     }
-    // for serial_config in cfg.serial {
-    //     thread::spawn(move || {
-    //         create_listener(&serial_config);
-    //     });
-    // }
+
+    for serial_config in cfg.serial {
+        let socket_base_path = cfg.global.socket_base_path.clone();
+        thread::spawn(move || {
+            DummyConsole {
+                console: Console::new(
+                    serial_config.name,
+                    serial_config.users_rw,
+                    serial_config.users_ro,
+                    socket_base_path,
+                ),
+            }.start();
+        });
+    }
+
 
     thread::park();
 }
