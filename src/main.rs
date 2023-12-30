@@ -1,6 +1,7 @@
 
+
 use console_server::config::{load_config, ServerConfig};
-use console_server::console::{Console, DummyConsole, SerialConsole};
+use console_server::console::Console;
 use std::thread;
 use clap::Parser;
 use env_logger::Env;
