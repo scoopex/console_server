@@ -5,102 +5,134 @@ use std::io::{Read, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::thread;
 
-use crate::config::{DummyConfig, SerialConfig};
+pub struct Console {
+    pub name: String,
+    pub users_rw: Vec<String>,
+    pub users_ro: Vec<String>,
+    pub socket_path: String,
+}
 
-fn handle_client(mut stream: UnixStream, name: String) {
-    // Handle incoming data from the client
-    let mut buffer = [0; 1024];
-    loop {
-        match stream.read(&mut buffer) {
-            Ok(n) => {
-                if n == 0 {
+impl Console {
+
+    pub fn new(name: String, users_rw: Vec<String>, users_ro: Vec<String>, socket_path: String) -> Console {
+        Console {
+            name: name,
+            users_ro: users_ro,
+            users_rw: users_rw,
+            socket_path: socket_path
+        }
+    }
+
+    fn set_socket_permissions(&self) {
+        let mut entries: Vec<AclEntry> = vec![];
+
+        entries.push(AclEntry::allow_user("", Perm::READ | Perm::WRITE, None));
+        entries.push(AclEntry::allow_group("", Perm::empty(), None));
+        entries.push(AclEntry::allow_other(Perm::empty(), None));
+        entries.push(AclEntry::allow_mask(Perm::empty(), None));
+        log::debug!("Users_RW: {:?}", self.users_rw);
+        for username in &self.users_rw {
+            entries.push(AclEntry::allow_user(
+                username,
+                Perm::READ | Perm::WRITE,
+                None,
+            ));
+        }
+        for username in &self.users_ro {
+            entries.push(AclEntry::allow_user(username, Perm::READ, None));
+        }
+
+        match setfacl(&[&self.socket_path], &entries, None) {
+            Ok(_) => log::info!(
+                "ACL file permissions successfully set for {}",
+                &self.socket_path
+            ),
+            Err(e) => log::error!(
+                "Error setting file permissions for {}: {}",
+                &self.socket_path,
+                e
+            ),
+        }
+    }
+
+    pub fn get_listener(&self) -> UnixListener{
+        log::info!(
+            "Start server {} listening on {:?}",
+            &self.name,
+            &self.socket_path
+        );
+        log::info!("Try it, with:\nsocat - UNIX-CONNECT:{}", self.socket_path);
+
+        std::fs::remove_file(&self.socket_path).ok();
+
+        let listener = UnixListener::bind(&self.socket_path).expect("Failed to bind to socket");
+        self.set_socket_permissions();
+        return listener;
+    }
+}
+
+trait ConsoleCapable {
+
+    fn handle_client(stream: UnixStream, name: String);
+
+    fn start_client_handler(&self, console: &Console) {
+        log::info!("Start client handler for {:?}", console.name);
+
+        let listener = console.get_listener();
+        for stream in listener.incoming() {
+            match stream {
+                Ok(stream) => {
+                    eprintln!("Accepting connection for {}", console.name);
+                    let console_name = console.name.clone();
+                    thread::spawn(move || {
+                        Self::handle_client(stream, console_name);
+                    });
+                }
+                Err(err) => {
+                    eprintln!("Error accepting connection for {} : {}", console.name, err);
                     break;
                 }
-                let received_data = &buffer[..n];
-                let received_str = String::from_utf8_lossy(received_data);
-                println!("Received on {} : {}", name, received_str.trim_end());
-
-                let write_back = format!("you said: {}", received_str);
-                stream.write_all(write_back.as_bytes()).unwrap();
-            }
-            Err(err) => {
-                eprintln!("Error reading from socket: {}", err);
-                break;
             }
         }
     }
+
+}
+pub struct DummyConsole {
+    pub console: Console,
 }
 
-fn set_socket_permissions(console: &DummyConfig) {
-    let mut entries: Vec<AclEntry> = vec![];
-
-    entries.push(AclEntry::allow_user("", Perm::READ | Perm::WRITE, None));
-    entries.push(AclEntry::allow_group("", Perm::empty(), None));
-    entries.push(AclEntry::allow_other(Perm::empty(), None));
-    entries.push(AclEntry::allow_mask(Perm::empty(), None));
-    log::debug!("Users_RW: {:?}", console.users_rw);
-    for username in &console.users_rw {
-        entries.push(AclEntry::allow_user(
-            username,
-            Perm::READ | Perm::WRITE,
-            None,
-        ));
-    }
-    for username in &console.users_ro {
-        entries.push(AclEntry::allow_user(
-            username,
-            Perm::READ,
-            None,
-        ));
-    }
-
-    match setfacl(&[&console.socket_path], &entries, None) {
-        Ok(_) => log::info!(
-            "ACL file permissions successfully set for {}",
-            &console.socket_path
-        ),
-        Err(e) => log::error!(
-            "Error setting file permissions for {}: {}",
-            &console.socket_path,
-            e
-        ),
+impl DummyConsole{
+    pub fn start(&self){
+        self.start_client_handler(&self.console);
     }
 }
 
-pub fn create_listener(console: &DummyConfig) {
-    log::info!(
-        "Start server {} listening on {:?}",
-        &console.name,
-        &console.socket_path
-    );
-    log::info!(
-        "Try it, with:\nsocat - UNIX-CONNECT:{}",
-        console.socket_path
-    );
-
-    std::fs::remove_file(&console.socket_path).ok();
-
-    let listener = UnixListener::bind(&console.socket_path).expect("Failed to bind to socket");
-    set_socket_permissions(console);
-    client_handler(listener, console);
+pub struct SerialConsole {
+    pub console: Console,
 }
 
-fn client_handler(listener: UnixListener, console: &DummyConfig) {
-    log::info!("Start client handler for {:?}", console.name);
+impl ConsoleCapable for DummyConsole{
+    fn handle_client(mut stream: UnixStream, name: String) {
+        let mut buffer = [0; 1024];
+        loop {
+            match stream.read(&mut buffer) {
+                Ok(n) => {
+                    if n == 0 {
+                        break;
+                    }
+                    let received_data = &buffer[..n];
+                    let received_str = String::from_utf8_lossy(received_data);
+                    println!("Received on {} : {}", name, received_str.trim_end());
 
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                let console_name = console.name.clone();
-                eprintln!("Accepting connection for {}", console_name);
-                thread::spawn(move || {
-                    handle_client(stream, console_name);
-                });
-            }
-            Err(err) => {
-                eprintln!("Error accepting connection for {} : {}", console.name, err);
-                break;
+                    let write_back = format!("you said: {}", received_str);
+                    stream.write_all(write_back.as_bytes()).unwrap();
+                }
+                Err(err) => {
+                    eprintln!("Error reading from socket: {}", err);
+                    break;
+                }
             }
         }
     }
+
 }

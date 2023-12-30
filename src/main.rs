@@ -1,6 +1,6 @@
 
 use std::thread;
-use console_server::console::create_listener;
+use console_server::console::{DummyConsole,SerialConsole, Console};
 use console_server::config::{ServerConfig, load_config};
 
 fn main() {
@@ -14,7 +14,16 @@ fn main() {
 
     for dummy_config in cfg.dummy {
         thread::spawn(move || {
-            create_listener(&dummy_config);
+            let cons = Console::new(
+                dummy_config.name, 
+                dummy_config.users_rw,
+                dummy_config.users_ro,
+                dummy_config.socket_path
+            );
+            let ds = DummyConsole{
+                console: cons
+            };
+            ds.start();
         });
     }
     // for serial_config in cfg.serial {
