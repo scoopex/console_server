@@ -21,3 +21,11 @@
   cargo run
   ```
 
+## Create release
+
+```
+$ cargo build --release
+$ du -sh  target/release/console_server
+3,1M    target/release/console_server
+
+```
