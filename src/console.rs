@@ -34,14 +34,11 @@ impl Console {
         entries.push(AclEntry::allow_group("", Perm::empty(), None));
         entries.push(AclEntry::allow_other(Perm::empty(), None));
         entries.push(AclEntry::allow_mask(Perm::empty(), None));
-        log::debug!("Users_RW: {:?}", self.users_rw);
+        log::debug!("{} - Users_RW: {:?}", self.name, self.users_rw);
         for username in &self.users_rw {
-            entries.push(AclEntry::allow_user(
-                username,
-                Perm::READ | Perm::WRITE,
-                None,
-            ));
+            entries.push(AclEntry::allow_user( username, Perm::READ | Perm::WRITE, None,));
         }
+        log::debug!("{} - Users_RO: {:?}", self.name, self.users_ro);
         for username in &self.users_ro {
             entries.push(AclEntry::allow_user(username, Perm::READ, None));
         }
@@ -65,7 +62,7 @@ impl Console {
             &self.name,
             &self.socket_path
         );
-        log::info!("Try it, with:\nsocat - UNIX-CONNECT:{}", self.socket_path);
+        log::debug!("Try it, with:\n\nsocat - UNIX-CONNECT:{}\n\n", self.socket_path);
 
         std::fs::remove_file(&self.socket_path).ok();
 
