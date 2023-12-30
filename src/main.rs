@@ -28,7 +28,7 @@ fn main() {
     for serial_config in cfg.serial {
         let socket_base_path = cfg.global.socket_base_path.clone();
         thread::spawn(move || {
-            DummyConsole {
+            SerialConsole {
                 console: Console::new(
                     serial_config.name,
                     serial_config.users_rw,

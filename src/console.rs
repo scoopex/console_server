@@ -111,6 +111,15 @@ pub struct SerialConsole {
     pub console: Console,
 }
 
+impl SerialConsole{
+    pub fn start(&self){
+        self.start_client_handler(&self.console);
+    }
+}
+
+
+
+
 impl ConsoleCapable for DummyConsole{
     fn handle_client(mut stream: UnixStream, name: String) {
         let mut buffer = [0; 1024];
