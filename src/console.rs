@@ -101,6 +101,7 @@ pub struct DummyConsole {
 }
 
 impl DummyConsole {
+    // TODO: Make this obsolete
     pub fn start(&self) {
         self.start_client_handler(&self.console);
     }
@@ -111,6 +112,7 @@ pub struct SerialConsole {
 }
 
 impl SerialConsole {
+    // TODO: Make this obsolete
     pub fn start(&self) {
         self.start_client_handler(&self.console);
     }
