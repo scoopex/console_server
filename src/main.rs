@@ -1,9 +1,12 @@
-
 use console_server::config::{load_config, ServerConfig};
-use console_server::console::{Console, DummyConsole, SerialConsole};
+use console_server::console::Console;
+use console_server::console::serial::SerialConsole;
+use console_server::console::dummy::DummyConsole;
+
 use std::thread;
 use clap::Parser;
 use env_logger::Env;
+
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
