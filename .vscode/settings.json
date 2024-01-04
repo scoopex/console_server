@@ -8,5 +8,6 @@
   "cSpell.words": [
     "exacl",
     "setfacl"
-  ]
+  ],
+  "rust-analyzer.showUnlinkedFileNotification": false
 }

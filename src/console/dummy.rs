@@ -15,7 +15,6 @@ impl DummyConsole {
     }
 }
 
-
 impl ConsoleCapable for DummyConsole {
     fn handle_client(mut stream: UnixStream, name: String) {
         let mut buffer = [0; 1024];

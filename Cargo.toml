@@ -3,8 +3,6 @@ name = "console_server"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 libc = "0.2"
 toml = "0.8"
@@ -12,6 +10,7 @@ log = "0.4.20"
 env_logger = "0.10.1"
 exacl = "0.11.0"
 clap = { version = "4.4.12", features = ["derive"] }
+crossbeam = "0.8"
 
 [profile.release]
 opt-level = "s"
