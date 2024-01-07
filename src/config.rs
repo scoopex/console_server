@@ -1,8 +1,9 @@
 // config.rs
 
-
+use std::{env, fs};
 use std::fs::File;
 use std::io::Read;
+use std::process::exit;
 use toml::Value;
 
 
@@ -36,8 +37,13 @@ pub struct ServerConfig {
 }
 
 pub fn load_config(file_name: &str) -> ServerConfig {
-    // Read the TOML file into a String
     let mut toml_content = String::new();
+
+    if !fs::metadata(file_name).is_ok() {
+        log::error!("File does not exist {:?} (cwd: {:?}", file_name, env::current_dir());
+        exit(1)
+    }
+
     File::open(file_name)
         .and_then(|mut file| file.read_to_string(&mut toml_content))
         .expect("Failed to read TOML file");

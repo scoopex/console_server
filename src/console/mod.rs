@@ -78,6 +78,8 @@ impl Console {
 pub trait ConsoleCapable {
     fn handle_client(stream: UnixStream, name: String);
 
+    fn start_console_port(&self, console: &Console);
+
     fn start_client_handler(&self, console: &Console) {
         log::info!("Start client handler for {:?}", console.name);
 

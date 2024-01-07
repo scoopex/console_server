@@ -10,7 +10,6 @@ pub struct SerialConsole {
 }
 
 impl SerialConsole {
-    // TODO: Make this obsolete
     pub fn start(&self) {
         self.start_client_handler(&self.console);
     }
@@ -26,7 +25,7 @@ impl ConsoleCapable for SerialConsole {
                     }
                     let received_data = &buffer[..n];
                     let received_str = String::from_utf8_lossy(received_data);
-                    println!(
+                    log::info!(
                         "Received on serial console {} : {}",
                         name,
                         received_str.trim_end()
@@ -36,10 +35,14 @@ impl ConsoleCapable for SerialConsole {
                     stream.write_all(write_back.as_bytes()).unwrap();
                 }
                 Err(err) => {
-                    eprintln!("Error reading from socket: {}", err);
+                    log::error!("Error reading from socket on serial console {} : {}", name, err);
                     break;
                 }
             }
         }
+    }
+
+    fn start_console_port(&self, console: &Console) {
+        log::info!("Start console port for {:?}", console.name);
     }
 }

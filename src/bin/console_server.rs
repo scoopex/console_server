@@ -7,7 +7,6 @@ use std::thread;
 use clap::Parser;
 use env_logger::Env;
 
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -29,6 +28,7 @@ fn main() {
     env_logger::Builder::from_env(
         Env::default().default_filter_or(args.log_level)
     ).format_timestamp_secs().init();
+
 
     let cfg: ServerConfig = load_config(&args.config);
 
@@ -59,7 +59,6 @@ fn main() {
             }.start();
         });
     }
-
 
     thread::park();
 }
