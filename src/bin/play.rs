@@ -1,37 +1,35 @@
+
 use std::thread;
-use crossbeam::channel;
-
+use std::time::Duration;
+use bus::Bus;
 fn main() {
-    // Create a multi-producer, multi-consumer channel
-    let (sender, receiver) = channel::unbounded();
 
-    // Spawn multiple threads as receivers
-    for i in 0..5 {
-        let receiver = receiver.clone();
-        thread::spawn(move || {
-            loop {
-                // Receive messages from the channel
-                let msg = receiver.recv();
-                match msg {
-                    Ok(value) => println!("Receiver {}: Received: {}", i, value),
-                    Err(_) => {
-                        println!("Receiver {}: Channel closed, exiting.", i);
-                        break;
-                    }
-                }
-            }
-        });
+    let mut bus = Bus::new(5);
+    let mut rx1 = bus.add_rx();
+    let mut rx2 = bus.add_rx();
+
+    thread::spawn(move || {
+        thread::sleep(Duration::from_secs(2));
+        let mut count = 0;
+        loop {
+            println!("recv thread 1: {}, {} values received", rx1.recv().unwrap(), count);
+            count += 1;
+        }
+    });
+    thread::spawn(move || {
+        let mut count = 0;
+        loop {
+            println!("recv thread 2: {}, {} values received", rx2.recv().unwrap(), count);
+            count += 1;
+        }
+    });
+
+    let mut count = 0;
+    loop{
+        bus.broadcast(count);
+        count += 1;
+        thread::sleep(Duration::from_secs(1));
     }
-
-    // Send messages from the single sender
-    for j in 0..100000000 {
-        sender.send(format!("Message {}", j)).expect("Failed to send message");
-        //thread::sleep(std::time::Duration::from_millis(100));
-    }
-
-    // Close the channel to signal the receivers to exit
-    drop(sender);
-
-    // Wait for all threads to finish
-    thread::sleep(std::time::Duration::from_secs(1));
 }
+
+
