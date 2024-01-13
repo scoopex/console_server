@@ -25,9 +25,9 @@ impl ConsoleCapable for DummyConsole {
     fn handle_client(mut stream: UnixStream, name: String, arc_bus_client: Arc<Mutex<Bus<ConsoleActivity>>>) {
         let mut buffer = [0; 1024];
 
-        log::info!("AGAiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaGA");
+        log::debug!("Trying to add receiver");
         let mut rx1 = arc_bus_client.lock().unwrap().add_rx();
-        log::info!("BBBBBAGAiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaGA");
+        log::debug!("Added a receiver");
         let mut count = 0;
         loop {
             let event = rx1.recv().unwrap();
@@ -62,7 +62,6 @@ impl ConsoleCapable for DummyConsole {
 
     fn start_console_port(&self, console: &Console, arc_bus: Arc<Mutex<Bus<ConsoleActivity>>>) {
         let console_name = console.name.clone();
-
         thread::spawn(move || {
             let mut count = 0;
             let mut bus = arc_bus.lock().unwrap();
