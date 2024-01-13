@@ -5,14 +5,21 @@ pub mod dummy;
 
 use exacl::{setfacl, AclEntry, Perm};
 use std::os::unix::net::{UnixListener, UnixStream};
+use std::sync::{Arc, Mutex};
 
 use std::thread;
+use bus::Bus;
 
 pub struct Console {
     pub name: String,
     pub users_rw: Vec<String>,
     pub users_ro: Vec<String>,
     pub socket_path: String,
+}
+
+#[derive(Clone)]
+pub struct ConsoleActivity {
+    pub body: String,
 }
 
 impl Console {
@@ -76,25 +83,26 @@ impl Console {
 }
 
 pub trait ConsoleCapable {
-    fn handle_client(stream: UnixStream, name: String);
+    fn handle_client(stream: UnixStream, name: String, arc_bus_client: Arc<Mutex<Bus<ConsoleActivity>>>);
 
-    fn start_console_port(&self, console: &Console);
+    fn start_console_port(&self, console: &Console,  arc_bus: Arc<Mutex<Bus<ConsoleActivity>>>);
 
-    fn start_client_handler(&self, console: &Console) {
+    fn start_client_handler(&self, console: &Console, arc_bus: Arc<Mutex<Bus<ConsoleActivity>>>) {
         log::info!("Start client handler for {:?}", console.name);
 
         let listener = console.get_listener();
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    eprintln!("Accepting connection for {}", console.name);
+                    log::info!("Accepting connection for {}", console.name);
                     let console_name = console.name.clone();
+                    let arc_bus_client = arc_bus.clone();
                     thread::spawn(move || {
-                        Self::handle_client(stream, console_name);
+                        Self::handle_client(stream, console_name, arc_bus_client);
                     });
                 }
                 Err(err) => {
-                    eprintln!("Error accepting connection for {} : {}", console.name, err);
+                    log::error!("Error accepting connection for {} : {}", console.name, err);
                     break;
                 }
             }

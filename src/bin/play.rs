@@ -7,7 +7,6 @@ use std::sync::{Arc,Mutex};
 #[derive(Clone)]
 pub struct ConsoleActivity {
     pub body: String,
-    pub terminate: bool,
 }
 fn main() {
 
@@ -24,9 +23,6 @@ fn main() {
             loop {
                 let event = rx1.recv().unwrap();
                 println!("recv thread {:?}: {}, {} values received", thread::current().id(), event.body, count);
-                if event.terminate{
-                    break;
-                }
                 count += 1;
             }
         });
@@ -35,11 +31,9 @@ fn main() {
    thread::spawn(move || {
        let mut count = 0;
        let mut bus = protected_bus.lock().unwrap();
-       let terminnate = false;
        loop {
            let event = ConsoleActivity{
                body: count.to_string(),
-               terminate: terminnate,
            };
            bus.broadcast(event);
            count += 1;
