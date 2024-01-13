@@ -4,24 +4,24 @@ log_file = "/tmp/console_server.log"
 users_rw = [ ]
 users_ro = [ ]
 
-[[serial_console]]
-name = "serial1"
-users_rw = [ "marc", "daemon"]
-users_ro = [ ]
-serial_device_name = "/dev/ttyS0"
-
-[[serial_console]]
-name = "serial2"
-users_rw = [ "sys"]
-users_ro = [ ]
-serial_device_name = "/dev/ttyS1"
+#[[serial_console]]
+#name = "serial1"
+#users_rw = [ "marc", "daemon"]
+#users_ro = [ ]
+#serial_device_name = "/dev/ttyS0"
+#
+#[[serial_console]]
+#name = "serial2"
+#users_rw = [ "sys"]
+#users_ro = [ ]
+#serial_device_name = "/dev/ttyS1"
 
 [[dummy_console]]
 name = "dummy1"
 users_rw = [ "marc", "daemon"]
 users_ro = [ ]
 
-[[dummy_console]]
-name = "dummy2"
-users_rw = [ "sys"]
-users_ro = [ ]
+#[[dummy_console]]
+#name = "dummy2"
+#users_rw = [ "sys"]
+#users_ro = [ ]

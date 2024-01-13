@@ -16,7 +16,8 @@ impl DummyConsole {
         let bus: Bus<ConsoleActivity> = Bus::new(10);
         let protected_bus = Arc::new(Mutex::new(bus));
         self.start_console_port(&self.console, protected_bus.clone());
-        self.start_client_handler(&self.console, protected_bus.clone());
+        self.start_client_handler(&self.console, protected_bus);
+        //self.start_client_handler(&self.console, protected_bus.clone());
     }
 }
 
@@ -31,7 +32,7 @@ impl ConsoleCapable for DummyConsole {
         let mut count = 0;
         loop {
             let event = rx1.recv().unwrap();
-            let write_back = format!("recv thread {:?}: {}, {} values received", thread::current().id(), event.body, count);
+            let write_back = format!("recv thread {:?}: >>>{}<<<, {} values received\n", thread::current().id(), event.body, count);
             stream.write_all(write_back.as_bytes()).unwrap();
             count += 1;
         }
@@ -64,14 +65,15 @@ impl ConsoleCapable for DummyConsole {
         let console_name = console.name.clone();
         thread::spawn(move || {
             let mut count = 0;
-            let mut bus = arc_bus.lock().unwrap();
             loop {
-
                 let event = ConsoleActivity{
-                    body: format!("Message on console {} : This is message nr {}", console_name, count.to_string()),
+                    body: format!("Message on console {} ~ This is message nr {}", console_name, count),
                 };
                 log::debug!("Sending : {}", event.body);
-                bus.broadcast(event);
+                {
+                    let mut bus = arc_bus.lock().unwrap();
+                    bus.broadcast(event);
+                }
                 count += 1;
                 thread::sleep(Duration::from_millis(1000));
             }
