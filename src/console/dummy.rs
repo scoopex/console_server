@@ -28,36 +28,37 @@ impl ConsoleCapable for DummyConsole {
         let mut buffer = [0; 1024];
 
         let mut rx1 = arc_bus_client.lock().unwrap().add_rx();
-        log::debug!("Added a receiver");
         loop {
+            log::debug!("STEP1");
             let event = rx1.recv().unwrap();
-            let write_back = format!("recv thread {:?}: >>>{}<<<, {} values received\n", thread::current().id(), event.body, count);
+            let write_back =
+                format!("recv thread {:?}: >>>{}<<<, {} values received\n", thread::current().id(), event.body, count);
             stream.write_all(write_back.as_bytes()).unwrap();
             count += 1;
+            log::debug!("STEP2");
+            match stream.read(&mut buffer) {
+                Ok(n) => {
+                    if n == 0 {
+                        break;
+                    }
+                    let received_data = &buffer[..n];
+                    let received_str = String::from_utf8_lossy(received_data);
+                    log::info!(
+                        "Received on dummy console {} : {}",
+                        name,
+                        received_str.trim_end()
+                    );
+
+                    let write_back = format!("you said: {}", received_str);
+                    stream.write_all(write_back.as_bytes()).unwrap();
+                }
+                Err(err) => {
+                    log::error!("Error reading from socket on dummy console {} : {}", name, err);
+                    break;
+                }
+            }
+            log::debug!("STEP3");
         }
-        // loop {
-        //     match stream.read(&mut buffer) {
-        //         Ok(n) => {
-        //             if n == 0 {
-        //                 break;
-        //             }
-        //             let received_data = &buffer[..n];
-        //             let received_str = String::from_utf8_lossy(received_data);
-        //             log::info!(
-        //                 "Received on dummy console {} : {}",
-        //                 name,
-        //                 received_str.trim_end()
-        //             );
-        //
-        //             let write_back = format!("you said: {}", received_str);
-        //             stream.write_all(write_back.as_bytes()).unwrap();
-        //         }
-        //         Err(err) => {
-        //             log::error!("Error reading from socket on dummy console {} : {}", name, err);
-        //             break;
-        //         }
-        //     }
-        // }
     }
 
     fn start_console_port(&self, console: &Console, arc_bus: Arc<Mutex<Bus<ConsoleActivity>>>) {
@@ -68,7 +69,7 @@ impl ConsoleCapable for DummyConsole {
                 let event = ConsoleActivity{
                     body: format!("Message on console {} ~ This is message number {}", console_name, count),
                 };
-                log::debug!("Sending : {}", event.body);
+                log::trace!("Sending : {}", event.body);
                 {
                     let mut bus = arc_bus.lock().unwrap();
                     bus.broadcast(event);
