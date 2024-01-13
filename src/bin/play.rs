@@ -4,19 +4,29 @@ use std::time::Duration;
 use bus::Bus;
 use std::sync::{Arc,Mutex};
 
+#[derive(Clone)]
+pub struct ConsoleActivity {
+    pub body: String,
+    pub terminate: bool,
+}
 fn main() {
 
-    let bus = Arc::new(Mutex::new(Bus::new(10)));
+    let bus: Bus<ConsoleActivity> = Bus::new(10);
+    let protected_bus = Arc::new(Mutex::new(bus));
 
     for thread_nr in 1..10 {
         println!("Starting thread {} now", thread_nr);
-        let also_bus = bus.clone();
+        let also_bus = protected_bus.clone();
         thread::spawn(move || {
             let mut rx1 = also_bus.lock().unwrap().add_rx();
             thread::sleep(Duration::from_secs(2));
             let mut count = 0;
             loop {
-                println!("recv thread {:?}: {}, {} values received", thread::current().id(), rx1.recv().unwrap(), count);
+                let event = rx1.recv().unwrap();
+                println!("recv thread {:?}: {}, {} values received", thread::current().id(), event.body, count);
+                if event.terminate{
+                    break;
+                }
                 count += 1;
             }
         });
@@ -24,9 +34,14 @@ fn main() {
 
    thread::spawn(move || {
        let mut count = 0;
-       let mut real_bus = bus.lock().unwrap();
+       let mut bus = protected_bus.lock().unwrap();
+       let terminnate = false;
        loop {
-           real_bus.broadcast(count.to_string());
+           let event = ConsoleActivity{
+               body: count.to_string(),
+               terminate: terminnate,
+           };
+           bus.broadcast(event);
            count += 1;
            thread::sleep(Duration::from_millis(100));
        }
