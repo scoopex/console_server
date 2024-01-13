@@ -24,12 +24,11 @@ impl DummyConsole {
 impl ConsoleCapable for DummyConsole {
 
     fn handle_client(mut stream: UnixStream, name: String, arc_bus_client: Arc<Mutex<Bus<ConsoleActivity>>>) {
+        let mut count = 0;
         let mut buffer = [0; 1024];
 
-        log::debug!("Trying to add receiver");
         let mut rx1 = arc_bus_client.lock().unwrap().add_rx();
         log::debug!("Added a receiver");
-        let mut count = 0;
         loop {
             let event = rx1.recv().unwrap();
             let write_back = format!("recv thread {:?}: >>>{}<<<, {} values received\n", thread::current().id(), event.body, count);
@@ -67,7 +66,7 @@ impl ConsoleCapable for DummyConsole {
             let mut count = 0;
             loop {
                 let event = ConsoleActivity{
-                    body: format!("Message on console {} ~ This is message nr {}", console_name, count),
+                    body: format!("Message on console {} ~ This is message number {}", console_name, count),
                 };
                 log::debug!("Sending : {}", event.body);
                 {
