@@ -28,7 +28,7 @@ fn main() {
        loop {
            real_bus.broadcast(count.to_string());
            count += 1;
-           thread::sleep(Duration::from_secs(1));
+           thread::sleep(Duration::from_millis(100));
        }
    });
     thread::park();
